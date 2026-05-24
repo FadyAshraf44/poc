@@ -2,21 +2,37 @@
 <html>
 <body>
 <script>
-// بمجرد تحميل هذه الصفحة، نحاول إرسال أي بيانات موجودة في الرابط (query string) أو postMessage إلى النافذة الأم
-if (window.opener && !window.opener.closed) {
-    // إرسال أي رمز محتمل (مثلا نبحث عن معامل code في الـ URL)
+(function() {
+    // دالة لإرسال البيانات إلى النافذة الأم
+    function sendToOpener(data) {
+        if (window.opener && !window.opener.closed) {
+            window.opener.postMessage(data, 'https://fadyashraf44.github.io');
+            console.log('[Receiver] Sent to opener:', data);
+        } else {
+            console.log('[Receiver] Opener not available.');
+        }
+    }
+
+    // ١. البحث عن رمز التفويض (authorization code) في query string للصفحة
     var params = new URLSearchParams(window.location.search);
     var code = params.get('code');
     if (code) {
-        window.opener.postMessage({ type: 'auth_code', code: code }, 'https://fadyashraf44.github.io');
-    } else {
-        // أحياناً الرمز يُرسل عبر postMessage من مزود الهوية لهذه الصفحة، فنقوم بإعادة توجيهه
-        window.addEventListener('message', function(e) {
-            // إعادة إرسال أي رسالة للوالد
-            window.opener.postMessage(e.data, 'https://fadyashraf44.github.io');
-        });
+        sendToOpener({ type: 'authorization_code', code: code });
     }
-}
+
+    // ٢. الاستماع لأي رسالة postMessage قادمة إلى هذه الصفحة (غالباً من مزود الهوية)
+    window.addEventListener('message', function(event) {
+        // في بيئة حقيقية، يجب أن يكون الأصل هو نطاق مزود الهوية،
+        // لكن للتبسيط أثناء الاختبار، نستمع للجميع ونعيد إرسالها للوالد
+        console.log('[Receiver] Got postMessage from', event.origin, ':', event.data);
+        sendToOpener({ type: 'relayed_message', origin: event.origin, data: event.data });
+    });
+
+    // في حال عدم وجود شيء مباشر، ننتظر قليلاً (فقط للاحتياط)
+    setTimeout(function() {
+        // إذا لم نرسل شيء بعد، ربما الرمز يأتي لاحقاً
+    }, 2000);
+})();
 </script>
 </body>
 </html>
