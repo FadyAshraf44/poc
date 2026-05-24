@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>ATO++ PoC - PostMessage Listener</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background: #f4f4f4; }
+        #log { background: #fff; padding: 15px; border-radius: 5px; border: 1px solid #ccc; max-height: 400px; overflow-y: auto; white-space: pre-wrap; word-break: break-all; }
+        .entry { margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 10px; }
+        .origin { color: #0066cc; font-weight: bold; }
+        .data { color: #333; }
+    </style>
+</head>
+<body>
+    <h1>🔍 PostMessage Interceptor (Test Page)</h1>
+    <p>أي رسالة <code>postMessage</code> جاية من النطاقات التانية هتظهر هنا وفي Console المتصفح.</p>
+    <p>التاريخ: <span id="timestamp"></span></p>
+    <hr>
+    <div id="log">منتظر وصول رسايل...</div>
+
+    <script>
+        const logDiv = document.getElementById('log');
+        const timestampSpan = document.getElementById('timestamp');
+
+        function updateTimestamp() {
+            const now = new Date();
+            timestampSpan.textContent = now.toLocaleString();
+        }
+        updateTimestamp();
+
+        function addLogEntry(origin, data) {
+            // تجاهل رسايل من نفس النافذة (self)
+            // بس هنسيب كل حاجة للتوضيح
+            const entry = document.createElement('div');
+            entry.className = 'entry';
+            entry.innerHTML = `
+                <div class="origin">📨 المصدر (Origin): ${origin}</div>
+                <div class="data">📦 البيانات (Data):</div>
+                <pre>${JSON.stringify(data, null, 2)}</pre>
+            `;
+            logDiv.appendChild(entry);
+            // auto-scroll
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+
+        // المستمع العام للرسايل
+        window.addEventListener('message', function(event) {
+            // مش هتحقق من origin معين عشان نقدر نشوف أي رسايل بتيجي
+            // في التقرير الحقيقي ممكن تحدد النطاق المستهدف لو حابب
+            console.log('[PoC] postMessage received from:', event.origin);
+            console.log('[PoC] data:', event.data);
+            
+            addLogEntry(event.origin, event.data);
+            updateTimestamp();
+        });
+
+        // لو الصفحة اتفتحت عن طريق open redirect بعد login
+        // ممكن يكون فيه query parameters إضافية، نعرضها كمان
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.toString()) {
+            addLogEntry('URL Parameters', Object.fromEntries(urlParams.entries()));
+        }
+        // عرض الـ hash لو فيه
+        if (window.location.hash) {
+            addLogEntry('Hash Fragment', window.location.hash);
+        }
+    </script>
+</body>
+</html>
